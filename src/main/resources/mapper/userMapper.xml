@@ -2,8 +2,371 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.nuvida.nuvidaback.mapper.userMapper">
 
-    <insert id="test" >
-        insert into TEST values ("연결성공")
+    <!--    여행 일정-->
+    <select id="getPlan" resultType="com.nuvida.nuvidaback.entity.Plans">
+        select A.plan_seq, A.plan_name, A.start_date, A.end_date, count(B.plan_seq) as member
+        from PLANS A
+                 LEFT JOIN MEMBERS B
+                           ON A.plan_seq = B.plan_seq
+        where A.plan_seq in (select plan_seq from MEMBERS where user_id = #{user_id})
+          AND now() &lt; A.end_date
+            limit 1
+    </select>
+
+    <!--  핫게-->
+    <select id="hotPost" resultType="com.nuvida.nuvidaback.entity.Post">
+        select B.post_seq, A.user_nick, A.profile_img, B.post_title,
+               CASE
+                   WHEN LENGTH(B.details) > 10 THEN CONCAT(SUBSTRING(B.details, 1, 10), '...')
+                   ELSE B.details
+                   END AS details,
+               COALESCE(D.comment_count, 0) AS cmtCount,
+               COALESCE(C.interest_count, 0) AS intCount
+        from POST B
+                 LEFT JOIN USERS A
+                           ON A.user_id = B.user_id
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS comment_count
+            FROM COMMENTS
+            GROUP BY post_seq
+        ) D ON B.post_seq = D.post_seq
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS interest_count
+            FROM INTERESTS
+            GROUP BY post_seq
+        ) C ON B.post_seq = C.post_seq
+        GROUP BY C.post_seq, D.post_seq
+        order by intCount desc
+            limit 5
+    </select>
+
+    <!--경기 정보-->
+    <select id="getMatch" resultType="com.nuvida.nuvidaback.entity.Baseball">
+        select A.bs_seq, B.team_name, B.logo_img, A.match_date, A.score, A.op_score, A.state
+        from BASEBALL A
+                 LEFT JOIN OPPONENTS B
+                           on A.op_seq = B.op_seq
+        where now() &lt; A.match_date
+        order by A.match_date
+            limit 1
+    </select>
+
+    <!--    경기 배팅 정보 -->
+    <select id="getBatting" resultType="com.nuvida.nuvidaback.entity.Batting">
+        SELECT
+            IFNULL(SUM(CASE WHEN op_seq = 1 THEN bt_point ELSE 0 END), 0) AS 'KiaBtPoint',
+                IFNULL(SUM(CASE WHEN op_seq != 1 THEN bt_point ELSE 0 END), 0) AS 'opBtPoint'
+        FROM BETTING
+        WHERE bs_seq = #{bs_seq}
+    </select>
+
+    <!--    유저 배팅 정보 -->
+    <select id="userBT" resultType="com.nuvida.nuvidaback.entity.Batting">
+        select A.bt_point, B.team_name, A.result
+        from BETTING A
+                 LEFT JOIN OPPONENTS B
+                           on A.op_seq = B.op_seq
+        where A.bs_seq = #{bs_seq}
+          and A.user_id=#{user_id}
+    </select>
+
+    <!--나중에 지우기 테스트용-->
+    <select id="userInfoTest" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_name, user_nick, user_phone, user_type, profile_img, user_point
+        from USERS
+        where user_id='test'
+    </select>
+
+    <!--    팀 식별자 가져오기 -->
+    <select id="getOpSeq">
+        select op_seq from OPPONENTS where team_name = #{selectedTeam}
+    </select>
+
+    <!--    배팅 등록 -->
+    <insert id="setUserBt">
+        insert into BETTING (user_id, bs_seq, op_seq, bt_point) values (#{user_id}, #{bs_seq}, #{op_seq}, #{bt_point})
     </insert>
+
+    <!--    배팅 업데이트 -->
+    <update id="userPoint">
+        update USERS set user_point= #{user_point} - #{bt_point} where user_id = #{user_id}
+    </update>
+
+    <!--    유저 정보 다시 가져오기 -->
+    <select id="setuserInfo" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_name, user_nick, user_phone, user_type, profile_img, user_point
+        from USERS
+        where user_id=#{user_id}
+    </select>
+
+    <!-- 배팅 정보 업데이트   -->
+    <update id="UpDateUserBt">
+        update BETTING set bt_point = #{nowPoint} + #{bt_point}
+        where user_id=#{user_id}
+          and bs_seq=#{bs_seq}
+    </update>
+
+    <!--    주간 경기 일정 목록 -->
+    <select id="getWeekMatch" resultType="com.nuvida.nuvidaback.entity.Batting">
+        select A.bs_seq, B.team_name, B.logo_img, A.match_date, IFNULL(C.KiaBtPoint, 0) AS 'KiaBtPoint', IFNULL( C.opBtPoint, 0) AS 'opBtPoint'
+        from BASEBALL A
+                 LEFT JOIN OPPONENTS B
+                           on A.op_seq = B.op_seq
+                 left join (
+            SELECT bs_seq,
+                   SUM(CASE WHEN op_seq = 1 THEN bt_point ELSE 0 END) AS 'KiaBtPoint',
+                    SUM(CASE WHEN op_seq != 1 THEN bt_point ELSE 0 END) AS 'opBtPoint'
+            FROM BETTING
+            group by bs_seq
+        ) C
+                           on A.bs_seq = C.bs_seq
+        where now() &lt; A.match_date
+        order by A.match_date
+            LIMIT 7 OFFSET 1
+    </select>
+
+    <!--    포인트 회수 -->
+    <update id="getPoint">
+        update USERS A
+            join BETTING B
+        on A.user_id = B.user_id
+            set B.result='4', A.user_point =#{getPoint}
+        where A.user_id=#{user_id}
+          and B.bs_seq=#{bs_seq}
+    </update>
+
+    <!--경기 목록-->
+    <select id="getMatchList" resultType="com.nuvida.nuvidaback.entity.Baseball">
+        select A.bs_seq, B.team_name, B.logo_img, A.match_date, A.score, A.op_score, A.state
+        from BASEBALL A
+                 LEFT JOIN OPPONENTS B
+                           on A.op_seq = B.op_seq
+        order by A.match_date
+    </select>
+
+    <!--    커뮤니티 목록 -->
+    <select id="getCmtList" resultType="com.nuvida.nuvidaback.entity.Post">
+        SELECT
+            A.post_seq,
+            A.post_title,
+            CASE
+                WHEN LENGTH(A.details) > 50 THEN CONCAT(SUBSTRING(A.details, 1, 30), '...')
+                ELSE A.details
+                END AS details,
+            B.img_filename AS image,
+            C.user_nick,
+            COALESCE(D.comment_count, 0) AS cmtCount,
+            COALESCE(E.interest_count, 0) AS intCount
+        FROM POST A
+                 LEFT JOIN (
+            SELECT img_filename, post_seq
+            FROM IMAGES
+            ORDER BY img_seq ASC
+                LIMIT 1
+        ) B ON A.post_seq = B.post_seq
+                 LEFT JOIN USERS C ON A.user_id = C.user_id
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS comment_count
+            FROM COMMENTS
+            GROUP BY post_seq
+        ) D ON A.post_seq = D.post_seq
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS interest_count
+            FROM INTERESTS
+            GROUP BY post_seq
+        ) E ON A.post_seq = E.post_seq
+        GROUP BY A.post_seq, B.img_filename, C.user_nick
+        order by A.regi_at desc
+    </select>
+
+    <!--    커뮤니티 글 상세보기-->
+    <select id="getCmtInfo" resultType="com.nuvida.nuvidaback.entity.Post">
+        SELECT
+            A.post_seq,
+            A.post_title,
+            A.details,
+            B.user_nick,
+            B.profile_img AS profile,
+            A.regi_at,
+            COALESCE(C.interest_count, 0) AS intCount
+        FROM POST A
+                 LEFT JOIN USERS B ON A.user_id = B.user_id
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS interest_count
+            FROM INTERESTS
+            GROUP BY post_seq
+        ) C ON A.post_seq = C.post_seq
+        where A.post_seq = #{post_seq}
+        GROUP BY A.post_seq, B.user_nick
+    </select>
+
+    <!--    커뮤니티 이미지 가져오기-->
+    <select id="getImages" resultType="com.nuvida.nuvidaback.entity.IMAGES">
+        select img_filename from IMAGES where post_seq=#{post_seq}
+    </select>
+
+    <!--    커뮤니티 댓글 가져오기-->
+    <select id="getComments" resultType="com.nuvida.nuvidaback.entity.Comments">
+        select A.cmt_seq, A.cmt_num, A.cmt_level, B.user_nick, B.profile_img AS profile, A.cmt_detail, A.regi_at
+        from COMMENTS A
+                 LEFT JOIN USERS B
+                           on A.user_id = B.user_id
+        where post_seq=#{post_seq}
+    </select>
+
+    <!--    댓글 작성-->
+    <insert id="insertCmt">
+        insert into COMMENTS(post_seq, cmt_num, cmt_level, user_id, cmt_detail) values (#{post_seq}, #{cmt_num}, #{cmt_level}, #{user_id}, #{cmt_detail})
+    </insert>
+
+    <!--    관심등록유무-->
+    <select id="getInt">
+        select count(*) from INTERESTS where post_seq=#{post_seq} and user_id=#{user_id}
+    </select>
+
+    <!--    관심등록-->
+    <insert id="insertInt">
+        insert into INTERESTS(post_seq, user_id) values (#{post_seq}, #{user_id})
+    </insert>
+
+    <!--    관심 등록 제거-->
+    <delete id="delInt">
+        delete from INTERESTS where post_seq=#{post_seq} and user_id=#{user_id}
+    </delete>
+
+    <!--    글 작성-->
+    <insert id="insertPost" parameterType="com.nuvida.nuvidaback.entity.Post" useGeneratedKeys="true" keyProperty="post_seq">
+        INSERT INTO POST (user_id, post_title, details)
+        VALUES (#{user_id}, #{post_title}, #{details});
+    </insert>
+
+    <!--    이미지 등록-->
+    <insert id="insertImg">
+        insert into IMAGES(post_seq, img_filename) values (#{post_seq}, #{img})
+    </insert>
+
+    <!--    베팅 목록 가져오기-->
+    <select id="getBattingList" resultType="com.nuvida.nuvidaback.entity.Batting">
+        select A. bs_seq, A.team_name as op_team, A.logo_img, A.match_date, A.kiaBtPoint, A.opBtPoint,
+               B.op_seq, B.bt_point
+        from (
+                 select A.bs_seq, B.team_name, B.logo_img, A.match_date, IFNULL(C.KiaBtPoint, 0) AS 'KiaBtPoint', IFNULL( C.opBtPoint, 0) AS 'opBtPoint'
+                 from BASEBALL A
+                          LEFT JOIN OPPONENTS B
+                                    on A.op_seq = B.op_seq
+                          left join (
+                     SELECT bs_seq,
+                            SUM(CASE WHEN op_seq = 1 THEN bt_point ELSE 0 END) AS 'KiaBtPoint',
+                             SUM(CASE WHEN op_seq != 1 THEN bt_point ELSE 0 END) AS 'opBtPoint'
+                     FROM BETTING
+                     group by bs_seq
+                 ) C
+                                    on A.bs_seq = C.bs_seq
+                 where now() &lt; A.match_date
+                 order by A.match_date
+                     LIMIT 7 OFFSET 1
+             ) A
+                 left join (
+            select * from BETTING where user_id = #{user_id}
+        ) B
+                           on A.bs_seq = B.bs_seq
+    </select>
+
+    <!--    유저 포인트 가져오기-->
+    <select id="getUserPoint">
+        select user_point from USERS where user_id=#{user_id}
+    </select>
+
+    <!--    내가 베팅한 경기 목록-->
+    <select id="getUserBattingList" resultType="com.nuvida.nuvidaback.entity.Batting">
+        select A. bs_seq, A.team_name, A.logo_img, A.match_date, A.kiaBtPoint, A.opBtPoint,
+               B.op_seq, B.bt_point, B.result
+        from (select A.bs_seq, B.team_name, B.logo_img, A.match_date, IFNULL(C.KiaBtPoint, 0) AS 'KiaBtPoint', IFNULL( C.opBtPoint, 0) AS 'opBtPoint'
+              from BASEBALL A
+                       LEFT JOIN OPPONENTS B
+                                 on A.op_seq = B.op_seq
+                       left join (
+                  SELECT bs_seq,
+                         SUM(CASE WHEN op_seq = 1 THEN bt_point ELSE 0 END) AS 'KiaBtPoint',
+                          SUM(CASE WHEN op_seq != 1 THEN bt_point ELSE 0 END) AS 'opBtPoint'
+                  FROM BETTING
+                  group by bs_seq
+              ) C
+                                 on A.bs_seq = C.bs_seq) A
+                 left join (
+            select * from BETTING where user_id = #{user_id}
+        ) B
+                           on A.bs_seq = B.bs_seq
+        where B.user_id=#{user_id}
+        order by A.match_date desc
+    </select>
+
+    <!--    친구 목록 가져오기 -->
+    <select id="getFriend" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_nick
+        from USERS
+        where user_id in (select fr_user from FRIENDS
+                          where user_id = #{user_id}
+                            and state = '2')
+    </select>
+
+    <!--    여행일정 등록하기-->
+    <insert id="insertPlan" parameterType="com.nuvida.nuvidaback.entity.Plans" useGeneratedKeys="true" keyProperty="plan_seq">
+        insert into PLANS(plan_name, start_date, end_date)
+        values (#{plan_name}, #{start_date}, #{end_date})
+    </insert>
+
+    <!--    여행 멤버 추가-->
+    <insert id="insertMember">
+        insert into MEMBERS(plan_seq, user_id, mem_type)
+        values (#{plan_seq}, #{user_id}, #{mem_type})
+    </insert>
+
+    <!--    여행 시간 추가-->
+    <insert id="insertTravletime">
+        insert into TRAVLETIME(plan_seq, travle_date, start_time, end_time)
+        values (#{plan_seq}, #{travel_date}, #{startTime}, #{endTime})
+    </insert>
+
+    <!--    이동루트 추가-->
+    <insert id="insertRoute">
+        insert into ROUTES(plan_seq,seq,title,addr,image,contentid,contenttypeid,lat,lng,reser_dt,travel_date)
+        values (#{plan_seq},#{seq},#{title},#{addr},#{image},#{contentid},#{contenttypeid},#{lat},#{lng},#{reser_dt},#{travel_date})
+    </insert>
+
+    <!--    호텔 정보 추가-->
+    <insert id="insertAcc">
+        insert into ACCOMMODATIONS(plan_seq,acc_name,acc_addr,check_in, check_out, lat,lng,contentid)
+        values (#{plan_seq},#{acc_name}, #{acc_addr},#{check_in},#{check_out}, #{lat}, #{lng}, #{contentid})
+    </insert>
+
+<!--    로그인 -->
+    <select id="signin" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_nick,profile_img, user_point
+        from USERS
+        where user_id = #{user_id}
+        and user_pw = md5(#{user_pw})
+    </select>
+
+<!--    아이디 중복 확인-->
+    <select id="checkId">
+        select count(*)
+        from USERS
+        where user_id = #{user_id}
+    </select>
+
+<!--    회원가입-->
+    <insert id="signUp">
+        insert into USERS(user_id, user_pw, user_name, user_nick, user_phone)
+        values (#{user_id}, md5(#{user_pw}), #{name}, #{user_id}, #{phone})
+    </insert>
+
+<!--    여행 목록 가져오기-->
+    <select id="getPlanList" resultType="com.nuvida.nuvidaback.entity.Plans">
+        select *
+        from PLANS
+        where plan_seq in (select plan_seq from MEMBERS where user_id = #{user_id})
+    </select>
+
 
 </mapper>
