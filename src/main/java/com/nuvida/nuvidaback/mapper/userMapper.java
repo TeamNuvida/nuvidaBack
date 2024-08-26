@@ -20,8 +20,6 @@ public interface userMapper {
 
     public Batting userBT(String user_id, String bs_seq);
 
-    // 나중에 지우기 테스트용임
-    Users userInfoTest();
 
     void setUserBt(String user_id, int bs_seq, int op_seq, int bt_point);
 

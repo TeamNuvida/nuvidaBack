@@ -67,15 +67,6 @@ public class userController {
         return userBtInfo;
     }
 
-    // 테스트용 로그인 정보 나중에 지우기
-    @RequestMapping("/userInfo")
-    public Users getUserInfo(){
-        System.out.println("로그인 예시 데이터");
-        Users userInfo = mapper.userInfoTest();
-        return userInfo;
-
-    }
-
     //    배팅하기
     @RequestMapping("/setUserBT")
     public void setUserBT(@RequestBody Map<String, String> requestData){
