@@ -84,4 +84,10 @@ public interface userMapper {
     void signUp(String user_id, String user_pw, String name, String phone);
 
     List<Plans> getPlanList(String user_id);
+
+    void updatePw(String user_id, String user_pw);
+
+    void updateUserInfo(String user_id, String user_nick, String profile_img, String user_phone);
+
+    Users getUserInfo(String user_id);
 }

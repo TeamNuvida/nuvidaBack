@@ -498,4 +498,26 @@ public class userController {
 
         return plansList;
     }
+
+    // 회원정보수정
+    @RequestMapping("/updateUserInfo")
+    public Users updateUserInfo(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String user_pw = requestData.get("user_pw");
+        String profile_img = requestData.get("profile_img");
+        String user_nick= requestData.get("user_nick");
+        String user_phone = requestData.get("user_phone");
+
+        if(user_pw != null){
+            mapper.updatePw(user_id, user_pw);
+        }
+
+        mapper.updateUserInfo(user_id, user_nick, profile_img, user_phone);
+
+        Users userInfo = mapper.getUserInfo(user_id);
+
+        return userInfo;
+
+
+    }
 }

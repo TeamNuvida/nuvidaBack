@@ -335,7 +335,7 @@
 
 <!--    로그인 -->
     <select id="signin" resultType="com.nuvida.nuvidaback.entity.Users">
-        select user_id, user_nick,profile_img, user_point
+        select user_id, user_nick,profile_img, user_point, user_phone
         from USERS
         where user_id = #{user_id}
         and user_pw = md5(#{user_pw})
@@ -359,6 +359,26 @@
         select *
         from PLANS
         where plan_seq in (select plan_seq from MEMBERS where user_id = #{user_id})
+    </select>
+
+    <update id="updatePw">
+        update USERS
+        set user_pw = md5(#{user_pw})
+        where user_id = #{user_id}
+    </update>
+
+    <update id="updateUserInfo">
+        update USERS
+        set user_nick = #{user_nick},
+            user_phone = #{user_phone},
+            profile_img = #{profile_img}
+        where user_id = #{user_id}
+    </update>
+
+    <select id="getUserInfo" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_nick,profile_img, user_point, user_phone
+        from USERS
+        where user_id = #{user_id}
     </select>
 
 
