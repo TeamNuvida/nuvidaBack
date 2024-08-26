@@ -90,4 +90,6 @@ public interface userMapper {
     void updateUserInfo(String user_id, String user_nick, String profile_img, String user_phone);
 
     Users getUserInfo(String user_id);
+
+    List<Post> getFavoriteList(String user_id);
 }

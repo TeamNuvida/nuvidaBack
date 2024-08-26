@@ -381,5 +381,40 @@
         where user_id = #{user_id}
     </select>
 
+    <select id="getFavoriteList" resultType="com.nuvida.nuvidaback.entity.Post">
+        SELECT
+            A.post_seq,
+            A.post_title,
+            CASE
+                WHEN LENGTH(A.details) > 50 THEN CONCAT(SUBSTRING(A.details, 1, 30), '...')
+                ELSE A.details
+                END AS details,
+            B.img_filename AS image,
+            C.user_nick,
+            COALESCE(D.comment_count, 0) AS cmtCount,
+            COALESCE(E.interest_count, 0) AS intCount
+        FROM POST A
+                 LEFT JOIN (
+            SELECT img_filename, post_seq
+            FROM IMAGES
+            ORDER BY img_seq ASC
+                LIMIT 1
+        ) B ON A.post_seq = B.post_seq
+                 LEFT JOIN USERS C ON A.user_id = C.user_id
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS comment_count
+            FROM COMMENTS
+            GROUP BY post_seq
+        ) D ON A.post_seq = D.post_seq
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS interest_count
+            FROM INTERESTS
+            GROUP BY post_seq
+        ) E ON A.post_seq = E.post_seq
+        where A.post_seq in ( select post_seq from INTERESTS where user_id=#{user_id})
+        GROUP BY A.post_seq, B.img_filename, C.user_nick
+        order by A.regi_at desc
+    </select>
+
 
 </mapper>

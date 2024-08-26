@@ -518,6 +518,16 @@ public class userController {
 
         return userInfo;
 
+    }
 
+
+    // 관심 목록
+    @RequestMapping("/getFavoriteList")
+    public List<Post> getFavoriteList(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+
+        List<Post> favoritelist = mapper.getFavoriteList(user_id);
+
+        return favoritelist;
     }
 }
