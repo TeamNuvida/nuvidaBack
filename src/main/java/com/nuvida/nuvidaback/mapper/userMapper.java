@@ -92,4 +92,30 @@ public interface userMapper {
     Users getUserInfo(String user_id);
 
     List<Post> getFavoriteList(String user_id);
+
+    List<Post> getCommunityList(String user_id);
+
+    List<Comments> getCommentList(String user_id);
+
+    void delPost(String post_seq, String user_id);
+
+    void delComment(String cmt_seq, String user_id);
+
+    List<Users> getRequestList(String user_id);
+
+    void requestFriend(String user_id, String request_id);
+
+    void requestedFriend(String user_id, String request_id);
+
+    void notiRequest(String user_id);
+
+    int checkFr(String user_id, String request_id);
+
+    void delFriend(String user_id, String fr_user);
+
+    void accept(String user_id, String fr_user);
+
+    void refusal(String user_id, String fr_user);
+
+    void resultNori(String fr_user, String msg);
 }

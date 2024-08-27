@@ -10,6 +10,7 @@
                            ON A.plan_seq = B.plan_seq
         where A.plan_seq in (select plan_seq from MEMBERS where user_id = #{user_id})
           AND now() &lt; A.end_date
+        group by A.plan_seq
             limit 1
     </select>
 
@@ -296,7 +297,7 @@
 
     <!--    친구 목록 가져오기 -->
     <select id="getFriend" resultType="com.nuvida.nuvidaback.entity.Users">
-        select user_id, user_nick
+        select user_id, user_nick, profile_img
         from USERS
         where user_id in (select fr_user from FRIENDS
                           where user_id = #{user_id}
@@ -359,6 +360,7 @@
         select *
         from PLANS
         where plan_seq in (select plan_seq from MEMBERS where user_id = #{user_id})
+        order by start_date desc
     </select>
 
     <update id="updatePw">
@@ -416,5 +418,105 @@
         order by A.regi_at desc
     </select>
 
+    <select id="getCommunityList" resultType="com.nuvida.nuvidaback.entity.Post">
+        SELECT
+            A.post_seq,
+            A.post_title,
+            CASE
+                WHEN LENGTH(A.details) > 50 THEN CONCAT(SUBSTRING(A.details, 1, 30), '...')
+                ELSE A.details
+                END AS details,
+            B.img_filename AS image,
+            C.user_nick,
+            COALESCE(D.comment_count, 0) AS cmtCount,
+            COALESCE(E.interest_count, 0) AS intCount,
+            A.regi_at
+        FROM POST A
+                 LEFT JOIN (
+            SELECT img_filename, post_seq
+            FROM IMAGES
+            ORDER BY img_seq ASC
+                LIMIT 1
+        ) B ON A.post_seq = B.post_seq
+                 LEFT JOIN USERS C ON A.user_id = C.user_id
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS comment_count
+            FROM COMMENTS
+            GROUP BY post_seq
+        ) D ON A.post_seq = D.post_seq
+                 LEFT JOIN (
+            SELECT post_seq, COUNT(*) AS interest_count
+            FROM INTERESTS
+            GROUP BY post_seq
+        ) E ON A.post_seq = E.post_seq
+        where A.user_id = #{user_id}
+        GROUP BY A.post_seq, B.img_filename, C.user_nick
+        order by A.regi_at desc
+    </select>
+
+    <select id="getCommentList" resultType="com.nuvida.nuvidaback.entity.Comments">
+        select A.cmt_seq, A.post_seq, A.cmt_detail,
+               B.post_title, A.regi_at
+        from COMMENTS A
+                 left join POST B
+                           on A.post_seq = B.post_seq
+        where A.user_id = #{user_id}
+    </select>
+
+    <delete id="delPost">
+        delete from POST where post_seq=#{post_seq} and user_id=#{user_id}
+    </delete>
+
+    <update id="delComment">
+        update COMMENTS set user_id='delete', cmt_detail='삭제된 댓글 입니다.'
+        where cmt_seq=#{cmt_seq} and user_id=#{user_id}
+    </update>
+
+
+    <select id="getRequestList" resultType="com.nuvida.nuvidaback.entity.Users">
+        select user_id, user_nick, profile_img
+        from USERS
+        where user_id in (select fr_user from FRIENDS
+                          where user_id = #{user_id}
+                            and state = '1')
+    </select>
+
+    <insert id="requestFriend">
+        insert into FRIENDS(user_id, fr_user, state) values (#{user_id}, #{request_id}, 0)
+    </insert>
+
+    <insert id="requestedFriend">
+        insert into FRIENDS(user_id, fr_user, state) values (#{request_id}, #{user_id}, 1)
+    </insert>
+
+    <insert id="notiRequest">
+        insert into NOTIFICATIONS(user_id, nt_type, message) values (#{user_id}, 1, '친구 요청이 도착했습니다.')
+    </insert>
+
+    <select id="checkFr">
+        select count(*) from FRIENDS
+        where user_id = #{user_id}
+          and state = '2'
+          and fr_user=#{request_id}
+    </select>
+
+    <delete id="delFriend">
+        delete from FRIENDS where fr_user=#{fr_user} and user_id=#{user_id} and state = '2'
+    </delete>
+
+
+    <update id="accept">
+        update FRIENDS set state='2'
+        where fr_user=#{fr_user} and user_id=#{user_id}
+    </update>
+
+    <update id="refusal">
+        update FRIENDS set state='3'
+        where fr_user=#{fr_user} and user_id=#{user_id}
+    </update>
+
+    <insert id="resultNori">
+        insert into NOTIFICATIONS(user_id, nt_type, message) values (#{fr_user}, 1, #{msg})
+    </insert>
 
 </mapper>

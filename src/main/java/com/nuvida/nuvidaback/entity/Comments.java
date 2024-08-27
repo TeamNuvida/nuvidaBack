@@ -16,5 +16,6 @@ public class Comments {
     private String user_nick;
     private String profile;
     private String cmt_detail;
+    private String post_title;
     private String regi_at;
 }

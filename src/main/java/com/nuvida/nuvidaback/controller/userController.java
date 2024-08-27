@@ -489,7 +489,7 @@ public class userController {
         mapper.signUp(user_id, user_pw, name, phone);
     }
 
-    // 아이디 중복 확인
+    // 여행 목록
     @RequestMapping("/getPlanList")
     public List<Plans> getPlanList(@RequestBody Map<String, String> requestData){
         String user_id = requestData.get("user_id");
@@ -530,4 +530,122 @@ public class userController {
 
         return favoritelist;
     }
+
+
+    // 작성한 글 목록
+    @RequestMapping("/getCommunityList")
+    public List<Post> getCommunityList(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+
+        List<Post> communityList = mapper.getCommunityList(user_id);
+
+        return communityList;
+    }
+
+    // 작성한 댓글 목록
+    @RequestMapping("/getCommentList")
+    public List<Comments> getCommentList(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+
+        List<Comments> commentList = mapper.getCommentList(user_id);
+
+        return commentList;
+    }
+
+    // 글 삭제
+    @RequestMapping("/deletePost")
+    public void deletePost(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String post_seq = requestData.get("post_seq");
+
+        mapper.delPost(post_seq, user_id);
+
+    }
+
+
+    // 댓글 삭제
+    @RequestMapping("/deleteComment")
+    public void deleteComment(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String cmt_seq = requestData.get("post_seq");
+
+        mapper.delComment(cmt_seq, user_id);
+
+    }
+
+    // 요청 목록 가져오기
+    @RequestMapping("/getRequestList")
+    public List<Users> getRequestList(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        List<Users> frList = mapper.getRequestList(user_id);
+        return frList;
+    }
+
+    // 친구 요청
+    @RequestMapping("/requestFriend")
+    public int requestFriend(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String request_id = requestData.get("request_id");
+
+        int check = mapper.checkId(request_id);
+
+        if(check == 0){
+            return check;
+        }
+
+        int fr_check = mapper.checkFr(user_id,request_id);
+
+        if(fr_check > 0){
+            return 1;
+        }
+
+        mapper.requestFriend(user_id, request_id);
+        mapper.requestedFriend(user_id, request_id);
+        mapper.notiRequest(request_id);
+
+        return 2;
+    }
+
+    // 친구 삭제
+    @RequestMapping("/delFriend")
+    public void delFriend(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String fr_user = requestData.get("fr_user");
+
+        mapper.delFriend(user_id, fr_user);
+        mapper.delFriend(fr_user, user_id);
+
+    }
+
+    // 친구 수락
+    @RequestMapping("/acceptFriend")
+    public void acceptFriend(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String fr_user = requestData.get("fr_user");
+
+        mapper.accept(user_id, fr_user);
+        mapper.accept(fr_user, user_id);
+
+        String msg = user_id+"님께서 친구 요청을 수락하셨습니다.";
+
+        mapper.resultNori(fr_user, msg);
+
+    }
+
+    // 친구 거절
+    @RequestMapping("/refusalFriend")
+    public void refusalFriend(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        String fr_user = requestData.get("fr_user");
+
+        mapper.refusal(user_id, fr_user);
+        mapper.refusal(fr_user, user_id);
+
+        String msg = user_id+"님께서 친구 요청을 거절하셨습니다.";
+
+        mapper.resultNori(fr_user, msg);
+
+    }
+    
+    
 }
