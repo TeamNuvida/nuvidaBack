@@ -118,4 +118,10 @@ public interface userMapper {
     void refusal(String user_id, String fr_user);
 
     void resultNori(String fr_user, String msg);
+
+    int checkNoti(String user_id);
+
+    void readNotice(String user_id);
+
+    List<Notice> getNoticeList(String user_id);
 }

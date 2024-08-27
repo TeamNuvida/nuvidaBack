@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.management.Notification;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -645,6 +646,26 @@ public class userController {
 
         mapper.resultNori(fr_user, msg);
 
+    }
+
+    // 알림 체크
+    @RequestMapping("/checkNoti")
+    public int checkNoti(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+
+        int check = mapper.checkNoti(user_id);
+
+        return check;
+    }
+
+    // 알림 페이지 이동
+    @RequestMapping("/setNoti")
+    public List<Notice> setNoti(@RequestBody Map<String, String> requestData){
+        String user_id = requestData.get("user_id");
+        mapper.readNotice(user_id);
+        List<Notice> notiList = mapper.getNoticeList(user_id);
+
+        return notiList;
     }
     
     

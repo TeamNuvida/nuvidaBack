@@ -519,4 +519,22 @@
         insert into NOTIFICATIONS(user_id, nt_type, message) values (#{fr_user}, 1, #{msg})
     </insert>
 
+    <select id="checkNoti">
+        select count(*)
+        from NOTIFICATIONS
+        where user_id=#{user_id}
+          and state = '0'
+    </select>
+
+    <update id="readNotice">
+        update NOTIFICATIONS set state='1'
+        where user_id=#{user_id}
+    </update>
+
+    <select id="getNoticeList" resultType="com.nuvida.nuvidaback.entity.Notice">
+        select *
+        from NOTIFICATIONS
+        where user_id=#{user_id}
+    </select>
+
 </mapper>
