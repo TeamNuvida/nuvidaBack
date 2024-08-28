@@ -16,8 +16,8 @@ public class Route {
     private String image;
     private String contentid;
     private String contenttypeid;
-    private int lat;
-    private int lng;
+    private float lat;
+    private float lng;
     private String travel_date;
     private String reser_dt;
 }

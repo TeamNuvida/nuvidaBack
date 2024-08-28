@@ -316,6 +316,12 @@
         values (#{plan_seq}, #{user_id}, #{mem_type})
     </insert>
 
+    <!--    멤버 초대 알림-->
+    <insert id="memNoti">
+        insert into NOTIFICATIONS(user_id,nt_type, message)
+        values ( #{user_id},'2', #{msg})
+    </insert>
+
     <!--    여행 시간 추가-->
     <insert id="insertTravletime">
         insert into TRAVLETIME(plan_seq, travle_date, start_time, end_time)
@@ -536,5 +542,95 @@
         from NOTIFICATIONS
         where user_id=#{user_id}
     </select>
+
+    <select id="getRouteList" resultType="com.nuvida.nuvidaback.entity.Route">
+        select * from ROUTES where plan_seq=#{plan_seq} order by travel_date, seq
+    </select>
+
+    <select id="getAcc" resultType="com.nuvida.nuvidaback.entity.ACCOMMODATIONS">
+        select * from ACCOMMODATIONS where plan_seq=#{plan_seq}
+    </select>
+
+    <select id="getPlanInfo" resultType="com.nuvida.nuvidaback.entity.Plans">
+        select * from PLANS where plan_seq=#{plan_seq}
+    </select>
+
+    <select id="getReser" resultType="com.nuvida.nuvidaback.entity.Route">
+        select * from ROUTES where plan_seq=#{plan_seq} and reser_dt is not null
+    </select>
+
+    <select id="getTrans" resultType="com.nuvida.nuvidaback.entity.TRANSPORTATIONS">
+        select * from TRANSPORTATIONS where plan_seq=#{plan_seq}
+    </select>
+
+    <insert id="setTrans">
+        insert into TRANSPORTATIONS(plan_seq, tr_name, tr_dt) values (#{plan_seq}, #{tr_name}, #{tr_dt})
+    </insert>
+
+    <insert id="setAcc">
+        insert into ACCOMMODATIONS(plan_seq, acc_name, acc_addr, check_in, check_out, lat, lng, contentid, contenttypeid)
+        values (#{plan_seq}, #{acc_name}, #{acc_addr}, #{check_in}, #{check_out}, #{lat}, #{lng}, #{contentid}, #{contenttypeid})
+    </insert>
+
+    <update id="setReser">
+        update ROUTES set reser_dt= #{reser_dt} where route_seq = #{route_seq}
+    </update>
+
+    <delete id="delTrans">
+        delete from TRANSPORTATIONS where tr_seq=#{tr_seq}
+    </delete>
+
+    <delete id="delAcc">
+        delete from ACCOMMODATIONS where acc_seq=#{acc_seq}
+    </delete>
+
+    <update id="delReser">
+        update ROUTES set reser_dt= null where route_seq = #{route_seq}
+    </update>
+
+    <select id="getMember" resultType="com.nuvida.nuvidaback.entity.MEMBERS">
+        select A.mem_seq, A.plan_seq, A.user_id, A.mem_type, B.user_nick, B.profile_img
+        from MEMBERS A
+                 Left join USERS B
+                           on A.user_id = B.user_id
+        where A.plan_seq=#{plan_seq}
+    </select>
+
+    <select id="getLeader">
+        select mem_type
+        from MEMBERS
+        where plan_seq=#{plan_seq}
+        and user_id = #{user_id}
+    </select>
+
+    <delete id="deleteMember">
+        delete from MEMBERS where mem_seq=#{mem_seq}
+    </delete>
+
+    <select id="getMemCount">
+        select count(*)
+        from MEMBERS
+        where plan_seq=#{plan_seq}
+    </select>
+
+    <select id="getCalculate" resultType="com.nuvida.nuvidaback.entity.CALCULATE">
+        select * from CALCULATE where plan_seq=#{plan_seq}
+    </select>
+
+    <insert id="addCalculate">
+        insert into CALCULATE(plan_seq, title, price) values (#{plan_seq}, #{title}, #{price})
+    </insert>
+
+    <delete id="delCalculate">
+        delete from CALCULATE where cal_seq=#{cal_seq}
+    </delete>
+
+    <delete id="delPlanMem">
+        delete from MEMBERS where plan_seq=#{plan_seq} and user_id=#{user_id}
+    </delete>
+    
+    <delete id="delPlanLeader">
+        delete from PLANS where plan_seq=#{plan_seq}
+    </delete>
 
 </mapper>

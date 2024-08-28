@@ -70,6 +70,7 @@ public interface userMapper {
     void insertPlan(Plans plan);
 
     void insertMember(int plan_seq, String user_id, String mem_type);
+    void memNoti(String user_id, String msg);
 
     void insertTravletime(int plan_seq, String travel_date, String startTime, String endTime);
 
@@ -124,4 +125,44 @@ public interface userMapper {
     void readNotice(String user_id);
 
     List<Notice> getNoticeList(String user_id);
+
+    List<Route> getRouteList(String plan_seq);
+
+    List<ACCOMMODATIONS> getAcc(String plan_seq);
+
+    Plans getPlanInfo(String plan_seq);
+
+    List<Route> getReser(String plan_seq);
+
+    List<TRANSPORTATIONS> getTrans(String plan_seq);
+
+    void setTrans(String plan_seq, String tr_name, String tr_dt);
+
+    void setAcc(String plan_seq, String acc_name, String acc_addr, String check_in, String check_out, float lat, float lng, String contentid, String contenttypeid);
+
+    void setReser(String route_seq, String reser_dt);
+
+    void delTrans(String tr_seq);
+
+    void delReser(String route_seq);
+
+    void delAcc(String acc_seq);
+
+    List<MEMBERS> getMember(String plan_seq);
+
+    String getLeader(String plan_seq, String user_id);
+
+    void deleteMember(String mem_seq);
+
+    int getMemCount(String plan_seq);
+
+    List<CALCULATE> getCalculate(String plan_seq);
+
+    void addCalculate(String plan_seq, String title, int price);
+
+    void delCalculate(String cal_seq);
+
+    void delPlanMem(String plan_seq, String user_id);
+
+    void delPlanLeader(String plan_seq);
 }

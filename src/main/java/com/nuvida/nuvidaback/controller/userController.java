@@ -315,7 +315,7 @@ public class userController {
 
     // 일정 등록
     @RequestMapping("/insertPlan")
-    public void insertPlan(@RequestBody Map<String, Object> requestData){
+    public int insertPlan(@RequestBody Map<String, Object> requestData){
         String user_id = (String) requestData.get("user_id");
         String plan_name = (String) requestData.get("plan_name");
         String start_date = (String) requestData.get("start_date");
@@ -422,12 +422,15 @@ public class userController {
 
         };
 
+        String msg = plan_name+" 일정에 초대되었습니다.";
+
 //        여행 멤버
         if(members != null && members.size() > 0){
 
             for(String member : members){
                 mem_type = "1";
                 mapper.insertMember(plan_seq,member,mem_type);
+                mapper.memNoti(member, msg);
             }
 
         };
@@ -450,6 +453,8 @@ public class userController {
                 mapper.insertAcc(plan_seq,acc_name,acc_addr,check_in, check_out, lat,lng,contentid);
             }
         };
+
+        return plan_seq;
 
     };
 
@@ -666,6 +671,211 @@ public class userController {
         List<Notice> notiList = mapper.getNoticeList(user_id);
 
         return notiList;
+    }
+
+    // 루트 목록 가져오기
+    @RequestMapping("/getRouteList")
+    public List<Route> getRouteList(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        List<Route> routeList = mapper.getRouteList(plan_seq);
+
+        return routeList;
+    }
+    
+    // 호텔 목록 가져오기
+    @RequestMapping("/getAcc")
+    public List<ACCOMMODATIONS> getAcc(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        List<ACCOMMODATIONS> accList = mapper.getAcc(plan_seq);
+
+        return accList;
+    }
+
+    // 여행정보 가져오기
+    @RequestMapping("/getPlanInfo")
+    public Plans getPlanInfo(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        Plans planInfo = mapper.getPlanInfo(plan_seq);
+
+        return planInfo;
+    }
+
+    //예약 목록 가져오기
+    @RequestMapping("/getReser")
+    public List<Route> getReser(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        List<Route> routeList = mapper.getReser(plan_seq);
+
+        return routeList;
+    }
+
+    //교통편 목록 가져오기
+    @RequestMapping("/getTrans")
+    public List<TRANSPORTATIONS> getTrans(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        List<TRANSPORTATIONS> transList = mapper.getTrans(plan_seq);
+
+        return transList;
+    }
+
+    //교통편 등록
+    @RequestMapping("/setTrans")
+    public void setTrans(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        String tr_name = requestData.get("tr_name");
+        String tr_dt = requestData.get("tr_dt");
+
+        mapper.setTrans(plan_seq, tr_name, tr_dt);
+    }
+
+    //교통편 등록
+    @RequestMapping("/setReser")
+    public void setReser(@RequestBody Map<String, String> requestData){
+        String route_seq = requestData.get("route_seq");
+        String reser_dt = requestData.get("reser_dt");
+
+        mapper.setReser(route_seq, reser_dt);
+    }
+    
+    //숙소 등록
+    @RequestMapping("/setAcc")
+    public void setAcc(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        String acc_name = requestData.get("acc_name");
+        String acc_addr = requestData.get("acc_addr");
+        String check_in = requestData.get("check_in");
+        String check_out = requestData.get("check_out");
+        float lat = Float.parseFloat(requestData.get("lat"));
+        float lng = Float.parseFloat(requestData.get("lng"));
+        String contentid = requestData.get("contentid");
+        String contenttypeid = requestData.get("contenttypeid");
+
+        mapper.setAcc(plan_seq, acc_name, acc_addr, check_in, check_out, lat, lng, contentid, contenttypeid);
+    }
+
+    //교통편 제거
+    @RequestMapping("/delTrans")
+    public void delTrans(@RequestBody Map<String, String> requestData){
+        String tr_seq = requestData.get("tr_seq");
+
+        mapper.delTrans(tr_seq);
+    }
+
+    //예약 제거
+    @RequestMapping("/delReser")
+    public void delReser(@RequestBody Map<String, String> requestData){
+        String route_seq = requestData.get("route_seq");
+
+        mapper.delReser(route_seq);
+    }
+
+    //숙소 제거
+    @RequestMapping("/delAcc")
+    public void delAcc(@RequestBody Map<String, String> requestData){
+        String acc_seq = requestData.get("acc_seq");
+
+        mapper.delAcc(acc_seq);
+    }
+
+    // 멤버 목록 가져오기
+    @RequestMapping("/getMember")
+    public List<MEMBERS> getMember(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        List<MEMBERS> memberList = mapper.getMember(plan_seq);
+
+        return memberList;
+    }
+
+
+    // 멤버 목록 가져오기
+    @RequestMapping("/getLeader")
+    public Boolean getLeader(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        String user_id = requestData.get("user_id");
+
+        String type = mapper.getLeader(plan_seq,user_id);
+
+        return type.equals("0");
+    }
+
+    // 멤버 목록 가져오기
+    @RequestMapping("/setMember")
+    public void setMember(@RequestBody Map<String, String> requestData){
+        String plan_name = requestData.get("plan_name");
+        String user_id = requestData.get("user_id");
+        int plan_seq = Integer.parseInt(requestData.get("plan_seq"));
+
+        String msg = plan_name+" 일정에 초대되었습니다.";
+
+        String mem_type = "1";
+        mapper.insertMember(plan_seq, user_id,mem_type);
+        mapper.memNoti(user_id, msg);
+    }
+
+    // 멤버 제거
+    @RequestMapping("/deleteMember")
+    public void deleteMember(@RequestBody Map<String, String> requestData){
+        String mem_seq = requestData.get("mem_seq");
+        mapper.deleteMember(mem_seq);
+    }
+
+    // 멤버 제거
+    @RequestMapping("/getMemCount")
+    public int getMemCount(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        int memCount = mapper.getMemCount(plan_seq);
+
+        return memCount;
+    }
+
+    //정산 목록 가져오기
+    @RequestMapping("/getCalculate")
+    public List<CALCULATE> getCalculate(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        List<CALCULATE> calList = mapper.getCalculate(plan_seq);
+
+        return calList;
+    }
+
+    // 정산 추가 하기
+    @RequestMapping("/addCalculate")
+    public void addCalculate(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        String title = requestData.get("title");
+        int price = Integer.parseInt(requestData.get("price"));
+
+        mapper.addCalculate(plan_seq,title,price);
+    }
+
+    // 정산 제거
+    @RequestMapping("/delCalculate")
+    public void delCalculate(@RequestBody Map<String, String> requestData){
+        String cal_seq = requestData.get("cal_seq");
+
+        mapper.delCalculate(cal_seq);
+    }
+
+    // 멤버 일정 제거
+    @RequestMapping("/delPlanMem")
+    public void delPlanMem(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+        String user_id = requestData.get("user_id");
+
+        mapper.delPlanMem(plan_seq, user_id);
+    }
+
+    // 리더 일정 제거
+    @RequestMapping("/delPlanLeader")
+    public void delPlanLeader(@RequestBody Map<String, String> requestData){
+        String plan_seq = requestData.get("plan_seq");
+
+        mapper.delPlanLeader(plan_seq);
     }
     
     
