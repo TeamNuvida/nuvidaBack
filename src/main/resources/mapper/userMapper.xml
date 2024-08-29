@@ -242,7 +242,8 @@
     <!--    베팅 목록 가져오기-->
     <select id="getBattingList" resultType="com.nuvida.nuvidaback.entity.Batting">
         select A. bs_seq, A.team_name as op_team, A.logo_img, A.match_date, A.kiaBtPoint, A.opBtPoint,
-               B.op_seq, B.bt_point
+               COALESCE(B.op_seq, 0) AS op_seq,
+               COALESCE(B.bt_point, 0) AS bt_point
         from (
                  select A.bs_seq, B.team_name, B.logo_img, A.match_date, IFNULL(C.KiaBtPoint, 0) AS 'KiaBtPoint', IFNULL( C.opBtPoint, 0) AS 'opBtPoint'
                  from BASEBALL A
@@ -258,7 +259,7 @@
                                     on A.bs_seq = C.bs_seq
                  where now() &lt; A.match_date
                  order by A.match_date
-                     LIMIT 7 OFFSET 1
+                     LIMIT 7
              ) A
                  left join (
             select * from BETTING where user_id = #{user_id}
