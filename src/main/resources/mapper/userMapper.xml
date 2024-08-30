@@ -18,7 +18,7 @@
     <select id="hotPost" resultType="com.nuvida.nuvidaback.entity.Post">
         select B.post_seq, A.user_nick, A.profile_img, B.post_title,
                CASE
-                   WHEN LENGTH(B.details) > 10 THEN CONCAT(SUBSTRING(B.details, 1, 10), '...')
+                   WHEN LENGTH(B.details) > 10 THEN CONCAT(SUBSTRING(B.details, 1, 40), '...')
                    ELSE B.details
                    END AS details,
                COALESCE(D.comment_count, 0) AS cmtCount,
@@ -36,7 +36,6 @@
             FROM INTERESTS
             GROUP BY post_seq
         ) C ON B.post_seq = C.post_seq
-        GROUP BY C.post_seq, D.post_seq
         order by intCount desc
             limit 5
     </select>
@@ -155,8 +154,8 @@
                  LEFT JOIN (
             SELECT img_filename, post_seq
             FROM IMAGES
+            group by post_seq
             ORDER BY img_seq ASC
-                LIMIT 1
         ) B ON A.post_seq = B.post_seq
                  LEFT JOIN USERS C ON A.user_id = C.user_id
                  LEFT JOIN (
